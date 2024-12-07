@@ -1,0 +1,15 @@
+.background-boot {
+    position: fixed;
+    z-index: -1;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70vh;
+    height: 70vh;
+    opacity: 0.03;
+    pointer-events: none;
+}
+
+[data-theme="dark"] .background-boot {
+    opacity: 0.05;
+}
