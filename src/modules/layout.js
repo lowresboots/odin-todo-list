@@ -1,3 +1,5 @@
+import ProjectManager from './projects';
+
 export default class Layout {
     constructor(userData) {
         this.userData = userData;
@@ -38,17 +40,23 @@ export default class Layout {
                 <div class="sidebar-section">
                     <h2>Home</h2>
                     <ul>
-                        <li><a href="#" class="active">All Tasks</a></li>
-                        <li><a href="#">Today</a></li>
-                        <li><a href="#">Upcoming</a></li>
+                        <li><a href="#" class="active" data-view="all">All Tasks</a></li>
+                        <li><a href="#" data-view="today">Today</a></li>
+                        <li><a href="#" data-view="upcoming">Upcoming</a></li>
                     </ul>
                 </div>
                 <div class="sidebar-section">
                     <h2>Projects</h2>
                     <ul class="projects-list">
-                        <!-- Projects will be added here dynamically -->
                     </ul>
-                    <button class="add-project-btn">+ Add Project</button>
+                    <button class="btn-add-project" id="add-project-btn">+ Add Project</button>
+                    <div class="add-project-form" style="display: none;">
+                        <input type="text" class="add-project-input" placeholder="Project name">
+                        <div class="project-actions">
+                            <button class="btn-add-project" id="save-project-btn">Add</button>
+                            <button class="btn-cancel" id="cancel-project-btn">Cancel</button>
+                        </div>
+                    </div>
                 </div>
             </nav>
         `;
@@ -66,7 +74,6 @@ export default class Layout {
                 <button class="add-task-btn">+ Add Task</button>
             </div>
             <div class="tasks-container">
-                <!-- Tasks will be added here dynamically -->
             </div>
         `;
 
@@ -99,6 +106,7 @@ export default class Layout {
         root.appendChild(appContainer);
 
         this.setupEventListeners();
+        this.setupProjectEvents();
     }
 
     setupEventListeners() {
@@ -107,5 +115,58 @@ export default class Layout {
         menuToggle.addEventListener('click', () => {
             sidebar.classList.toggle('active');
         });
+    }
+
+    setupProjectEvents() {
+        const projectManager = new ProjectManager();
+        const projectsList = document.querySelector('.projects-list');
+        const addProjectBtn = document.getElementById('add-project-btn');
+        const addProjectForm = document.querySelector('.add-project-form');
+        const projectInput = document.querySelector('.add-project-input');
+        const saveProjectBtn = document.getElementById('save-project-btn');
+        const cancelProjectBtn = document.getElementById('cancel-project-btn');
+
+        this.renderProjects(projectManager.getAllProjects());
+
+        addProjectBtn.addEventListener('click', () => {
+            addProjectBtn.style.display = 'none';
+            addProjectForm.style.display = 'block';
+            projectInput.focus();
+        });
+
+        cancelProjectBtn.addEventListener('click', () => {
+            addProjectBtn.style.display = 'block';
+            addProjectForm.style.display = 'none';
+            projectInput.value = '';
+        });
+
+        saveProjectBtn.addEventListener('click', () => {
+            const projectName = projectInput.value.trim();
+            if (projectName) {
+                const newProject = projectManager.createProject(projectName);
+                this.renderProjects(projectManager.getAllProjects());
+                addProjectBtn.style.display = 'block';
+                addProjectForm.style.display = 'none';
+                projectInput.value = '';
+            }
+        });
+
+        projectsList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('delete-project')) {
+                const projectId = e.target.closest('.project-item').dataset.id;
+                projectManager.deleteProject(projectId);
+                this.renderProjects(projectManager.getAllProjects());
+            }
+        });
+    }
+
+    renderProjects(projects) {
+        const projectsList = document.querySelector('.projects-list');
+        projectsList.innerHTML = projects.map(project => `
+            <li class="project-item" data-id="${project.id}">
+                <span class="project-name">${project.name}</span>
+                <button class="delete-project" aria-label="Delete project">×</button>
+            </li>
+        `).join('');
     }
 }

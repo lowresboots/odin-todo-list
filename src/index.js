@@ -2,6 +2,7 @@ import './styles/main.css';
 import './styles/background.css';
 import './styles/onboarding.css';
 import './styles/layout.css';
+import './styles/projects.css';
 import bootIcon from './assets/boot.svg';
 import Onboarding from './modules/onboarding';
 import Layout from './modules/layout';
