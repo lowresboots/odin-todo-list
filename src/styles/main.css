@@ -1,3 +1,13 @@
+:root {
+    --bg-color: #ffffff;
+    --header-bg: #ffffff;
+    --sidebar-bg: #f8f9fa;
+    --text-color: #212529;
+    --text-muted: #6c757d;
+    --border-color: #dee2e6;
+    --hover-bg: rgba(0, 123, 255, 0.1);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -6,4 +16,5 @@
 
 body {
     font-family: Arial, sans-serif;
+    line-height: 1.6;
 }

@@ -8,8 +8,5 @@
     height: 70vh;
     opacity: 0.03;
     pointer-events: none;
-}
-
-[data-theme="dark"] .background-boot {
-    opacity: 0.05;
+    transition: opacity 0.3s ease;
 }
