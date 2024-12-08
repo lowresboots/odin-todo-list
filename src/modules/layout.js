@@ -3,8 +3,9 @@ import ProjectManager from './projects';
 export default class Layout {
     constructor(userData) {
         this.userData = userData;
+        this.activeProjectId = null;
     }
-
+    
     createHeader() {
         const header = document.createElement('header');
         header.className = 'app-header';
@@ -93,6 +94,11 @@ export default class Layout {
         return `<div class="user-avatar-img" style="background-image: url(${this.userData.avatar})"></div>`;
     }
 
+    updateMainHeader(title) {
+        const contentHeader = document.querySelector('.content-header h2');
+        contentHeader.textContent = title;
+    }
+
     init() {
         const appContainer = document.createElement('div');
         appContainer.className = 'app-container';
@@ -115,6 +121,23 @@ export default class Layout {
         menuToggle.addEventListener('click', () => {
             sidebar.classList.toggle('active');
         });
+    
+        const viewLinks = document.querySelectorAll('.sidebar-nav a[data-view]');
+        viewLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                document.querySelectorAll('.sidebar-nav a, .project-item').forEach(el => {
+                    el.classList.remove('active');
+                });
+                
+                link.classList.add('active');
+                
+                this.activeProjectId = null;
+                
+                this.updateMainHeader(link.textContent);
+            });
+        });
     }
 
     setupProjectEvents() {
@@ -125,21 +148,21 @@ export default class Layout {
         const projectInput = document.querySelector('.add-project-input');
         const saveProjectBtn = document.getElementById('save-project-btn');
         const cancelProjectBtn = document.getElementById('cancel-project-btn');
-
+    
         this.renderProjects(projectManager.getAllProjects());
-
+    
         addProjectBtn.addEventListener('click', () => {
             addProjectBtn.style.display = 'none';
             addProjectForm.style.display = 'block';
             projectInput.focus();
         });
-
+    
         cancelProjectBtn.addEventListener('click', () => {
             addProjectBtn.style.display = 'block';
             addProjectForm.style.display = 'none';
             projectInput.value = '';
         });
-
+    
         saveProjectBtn.addEventListener('click', () => {
             const projectName = projectInput.value.trim();
             if (projectName) {
@@ -150,12 +173,28 @@ export default class Layout {
                 projectInput.value = '';
             }
         });
-
+    
         projectsList.addEventListener('click', (e) => {
+            const projectItem = e.target.closest('.project-item');
+            
             if (e.target.classList.contains('delete-project')) {
-                const projectId = e.target.closest('.project-item').dataset.id;
+                const projectId = projectItem.dataset.id;
                 projectManager.deleteProject(projectId);
                 this.renderProjects(projectManager.getAllProjects());
+                return;
+            }
+    
+            if (projectItem) {
+                const projectId = projectItem.dataset.id;
+                const project = projectManager.getProject(projectId);
+                
+                this.activeProjectId = projectId;
+                this.renderProjects(projectManager.getAllProjects());
+                this.updateMainHeader(project.name);
+    
+                document.querySelectorAll('.sidebar-nav a').forEach(link => {
+                    link.classList.remove('active');
+                });
             }
         });
     }
@@ -163,7 +202,7 @@ export default class Layout {
     renderProjects(projects) {
         const projectsList = document.querySelector('.projects-list');
         projectsList.innerHTML = projects.map(project => `
-            <li class="project-item" data-id="${project.id}">
+            <li class="project-item ${project.id === this.activeProjectId ? 'active' : ''}" data-id="${project.id}">
                 <span class="project-name">${project.name}</span>
                 <button class="delete-project" aria-label="Delete project">×</button>
             </li>

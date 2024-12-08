@@ -17,6 +17,7 @@
     background-color: var(--hover-bg);
 }
 
+.sidebar-nav a.active,
 .project-item.active {
     background-color: var(--hover-bg);
     font-weight: bold;
