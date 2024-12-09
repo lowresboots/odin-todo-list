@@ -9,6 +9,30 @@ export class Project {
 export default class ProjectManager {
     constructor() {
         this.projects = [];
+        this.defaultProjectNames = [
+            "Dating App for Developers",
+            "Cat Pic NFT Marketplace",
+            "AI That Makes Coffee",
+            "StackOverflow But Nicer",
+            "Social Media for Introverts",
+            "Bitcoin for Pets",
+            "Netflix for Documentation",
+            "Uber for Rubber Ducks",
+            "Tinder for Design Patterns",
+            "JavaScript Framework #8,742",
+            "Another Todo App™",
+            "Reddit for Office Plants",
+            "GitHub for Recipes",
+            "Discord for Rubber Ducks",
+            "LinkedIn for AI Bots",
+            "Netflix for Code Reviews",
+            "Spotify for Compilation Errors",
+            "Instagram for Terminal Output",
+            "TikTok for Algorithms",
+            "Twitch for Debugging Sessions",
+            "WordPress for Memes",
+            "YouTube for Error Messages"
+        ];
         this.loadProjects();
     }
 
@@ -17,12 +41,19 @@ export default class ProjectManager {
         if (savedProjects) {
             this.projects = JSON.parse(savedProjects);
         } else {
-            this.createProject('My Tasks');
+            this.createDefaultProject();
         }
     }
 
     saveProjects() {
         localStorage.setItem('bootdoProjects', JSON.stringify(this.projects));
+    }
+
+    createDefaultProject() {
+        const randomIndex = Math.floor(Math.random() * this.defaultProjectNames.length);
+        const defaultName = this.defaultProjectNames[randomIndex];
+        const defaultProject = this.createProject(defaultName);
+        return defaultProject;
     }
 
     createProject(name) {
