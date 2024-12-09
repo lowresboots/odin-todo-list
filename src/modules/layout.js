@@ -316,12 +316,12 @@ export default class Layout {
             if (projectItem) {
                 const projectId = projectItem.dataset.id;
                 const project = projectManager.getProject(projectId);
-
+                
                 this.activeProjectId = projectId;
                 this.renderProjects(projectManager.getAllProjects());
                 this.updateMainHeader(project.name);
-                this.renderTodos();
-
+                this.renderCurrentView();
+            
                 document.querySelectorAll('.sidebar-nav a').forEach(link => {
                     link.classList.remove('active');
                 });
@@ -346,15 +346,20 @@ export default class Layout {
     
             if (e.target.classList.contains('delete-todo')) {
                 this.todoManager.deleteTodo(projectId, todoId);
-                this.renderTodos(document.querySelector('.sidebar-nav a.active').dataset.view);
+                this.renderCurrentView();
             }
             
             if (e.target.classList.contains('todo-checkbox')) {
                 this.todoManager.toggleTodoComplete(projectId, todoId);
-                const currentView = document.querySelector('.sidebar-nav a.active').dataset.view;
-                this.renderTodos(currentView);
+                this.renderCurrentView();
             }
         });
+    }
+    
+    renderCurrentView() {
+        const activeLink = document.querySelector('.sidebar-nav a.active');
+        const currentView = activeLink ? activeLink.dataset.view : 'all';
+        this.renderTodos(currentView);
     }
 
     renderProjects(projects) {

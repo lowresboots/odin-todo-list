@@ -39,7 +39,8 @@ export default class TodoManager {
     }
 
     getTodos(projectId) {
-        return this.todos.get(projectId) || [];
+        const projectTodos = this.todos.get(projectId) || [];
+        return projectTodos.filter(todo => !todo.completed);
     }
 
     getAllTodos() {
@@ -58,7 +59,7 @@ export default class TodoManager {
     getTodayTodos() {
         const allTodos = this.getAllTodos();
         return allTodos.filter(todo => {
-            if (!todo.dueDate) return false;
+            if (!todo.dueDate || todo.completed) return false;
             return isToday(parseISO(todo.dueDate));
         });
     }
@@ -66,7 +67,7 @@ export default class TodoManager {
     getUpcomingTodos() {
         const allTodos = this.getAllTodos();
         return allTodos.filter(todo => {
-            if (!todo.dueDate) return false;
+            if (!todo.dueDate || todo.completed) return false;
             return isFuture(parseISO(todo.dueDate));
         }).sort((a, b) => {
             return parseISO(a.dueDate) - parseISO(b.dueDate);
