@@ -1,3 +1,5 @@
+import TodoManager from './todos';
+
 export class Project {
     constructor(name) {
         this.id = Date.now().toString();
@@ -66,6 +68,9 @@ export default class ProjectManager {
     deleteProject(projectId) {
         this.projects = this.projects.filter(project => project.id !== projectId);
         this.saveProjects();
+    
+        const todoManager = new TodoManager();
+        todoManager.removeProjectTasks(projectId);
     }
 
     getProject(projectId) {

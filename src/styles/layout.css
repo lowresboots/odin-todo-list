@@ -164,10 +164,6 @@
     background-color: #f8f9fa;
 }
 
-.sign-out {
-    color: #dc3545;
-}
-
 @media (max-width: 768px) {
     .app-container {
         grid-template-areas:

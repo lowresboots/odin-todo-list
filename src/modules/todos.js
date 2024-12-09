@@ -38,9 +38,23 @@ export default class TodoManager {
         this.saveTodos();
     }
 
-    getTodos(projectId) {
-        const projectTodos = this.todos.get(projectId) || [];
-        return projectTodos.filter(todo => !todo.completed);
+    getTodo(projectId, todoId) {
+        const projectTodos = this.todos.get(projectId);
+        if (projectTodos) {
+            return projectTodos.find(todo => todo.id === todoId);
+        }
+        return null;
+    }
+    
+    updateTodo(projectId, todoId, updatedTodo) {
+        const projectTodos = this.todos.get(projectId);
+        if (projectTodos) {
+            const index = projectTodos.findIndex(todo => todo.id === todoId);
+            if (index !== -1) {
+                projectTodos[index] = updatedTodo;
+                this.saveTodos();
+            }
+        }
     }
 
     getAllTodos() {
@@ -104,5 +118,10 @@ export default class TodoManager {
     getActiveTodos() {
         const allTodos = this.getAllTodos();
         return allTodos.filter(todo => !todo.completed);
+    }
+
+    removeProjectTasks(projectId) {
+        this.todos.delete(projectId);
+        this.saveTodos();
     }
 }

@@ -100,27 +100,28 @@ export default class Layout {
         return `<div class="user-avatar-img" style="background-image: url(${this.userData.avatar})"></div>`;
     }
 
-    createTodoModal() {
+    createTodoModal(todoToEdit = null) {
         const modal = document.createElement('div');
         modal.className = 'modal-overlay';
-
+        
+        // Get all projects for the selector
         const projectManager = new ProjectManager();
         const projects = projectManager.getAllProjects();
         const projectOptions = projects
             .map(project => `
-                <option value="${project.id}" ${project.id === this.activeProjectId ? 'selected' : ''}>
+                <option value="${project.id}" ${project.id === (todoToEdit?.projectId || this.activeProjectId) ? 'selected' : ''}>
                     ${project.name}
                 </option>
             `)
             .join('');
-
+        
         modal.innerHTML = `
             <div class="todo-modal">
-                <h2>Add New Task</h2>
+                <h2>${todoToEdit ? 'Edit Task' : 'Add New Task'}</h2>
                 <form class="todo-form">
                     <div class="form-group">
                         <label for="todo-title">Title</label>
-                        <input type="text" id="todo-title" required>
+                        <input type="text" id="todo-title" value="${todoToEdit?.title || ''}" required>
                     </div>
                     <div class="form-group">
                         <label for="todo-project">Project</label>
@@ -130,58 +131,78 @@ export default class Layout {
                     </div>
                     <div class="form-group">
                         <label for="todo-description">Description</label>
-                        <textarea id="todo-description" rows="3"></textarea>
+                        <textarea id="todo-description" rows="3">${todoToEdit?.description || ''}</textarea>
                     </div>
                     <div class="form-group">
                         <label for="todo-due-date">Due Date</label>
-                        <input type="date" id="todo-due-date">
+                        <input type="date" id="todo-due-date" value="${todoToEdit?.dueDate || ''}">
                     </div>
                     <div class="form-group">
                         <label for="todo-priority">Priority</label>
                         <select id="todo-priority">
-                            <option value="low">Low</option>
-                            <option value="medium" selected>Medium</option>
-                            <option value="high">High</option>
+                            <option value="low" ${todoToEdit?.priority === 'low' ? 'selected' : ''}>Low</option>
+                            <option value="medium" ${!todoToEdit || todoToEdit?.priority === 'medium' ? 'selected' : ''}>Medium</option>
+                            <option value="high" ${todoToEdit?.priority === 'high' ? 'selected' : ''}>High</option>
                         </select>
                     </div>
                     <div class="todo-actions">
-                        <button type="submit" class="btn-todo btn-primary">Add Task</button>
+                        <button type="submit" class="btn-todo btn-primary">
+                            ${todoToEdit ? 'Update' : 'Add Task'}
+                        </button>
+                        ${todoToEdit ? '<button type="button" class="btn-todo btn-danger" id="delete-todo">Delete</button>' : ''}
                         <button type="button" class="btn-todo btn-secondary" id="cancel-todo">Cancel</button>
                     </div>
                 </form>
             </div>
         `;
-
+    
         return modal;
     }
 
-    showTodoModal() {
-        const modal = this.createTodoModal();
+    showTodoModal(todoToEdit = null, projectId = null) {
+        const modal = this.createTodoModal(todoToEdit);
         document.body.appendChild(modal);
-
+    
         const form = modal.querySelector('.todo-form');
         const cancelButton = modal.querySelector('#cancel-todo');
-
+        const deleteButton = modal.querySelector('#delete-todo');
+    
         form.addEventListener('submit', (e) => {
             e.preventDefault();
-
+            
             const title = document.getElementById('todo-title').value;
             const description = document.getElementById('todo-description').value;
             const dueDate = document.getElementById('todo-due-date').value;
             const priority = document.getElementById('todo-priority').value;
-            const projectId = document.getElementById('todo-project').value;
-
+            const selectedProjectId = document.getElementById('todo-project').value;
+    
             if (title.trim()) {
-                const todo = new Todo(title, description, dueDate, priority);
-                this.todoManager.addTodo(projectId, todo);
-                this.renderTodos();
+                if (todoToEdit) {
+                    todoToEdit.title = title;
+                    todoToEdit.description = description;
+                    todoToEdit.dueDate = dueDate;
+                    todoToEdit.priority = priority;
+                    this.todoManager.updateTodo(projectId, todoToEdit.id, todoToEdit);
+                } else {
+                    const todo = new Todo(title, description, dueDate, priority);
+                    this.todoManager.addTodo(selectedProjectId, todo);
+                }
+                this.renderCurrentView();
                 document.body.removeChild(modal);
             }
         });
-
+    
         cancelButton.addEventListener('click', () => {
             document.body.removeChild(modal);
         });
+    
+        if (deleteButton) {
+            deleteButton.addEventListener('click', () => {
+                this.todoManager.deleteTodo(projectId, todoToEdit.id);
+                this.renderCurrentView();
+                document.body.removeChild(modal);
+            });
+        }
     }
 
     showSignOutConfirmation() {
@@ -220,8 +241,8 @@ export default class Layout {
     renderTodos(view = 'all') {
         const tasksContainer = document.querySelector('.tasks-container');
         let todos;
-
-        switch (view) {
+    
+        switch(view) {
             case 'today':
                 todos = this.todoManager.getTodayTodos();
                 break;
@@ -232,29 +253,35 @@ export default class Layout {
                 todos = this.todoManager.getCompletedTodos();
                 break;
             default:
-                todos = this.activeProjectId
-                    ? this.todoManager.getTodos(this.activeProjectId)
-                    : this.todoManager.getActiveTodos();
+                if (this.activeProjectId) {
+                    todos = this.todoManager.todos.get(this.activeProjectId) || [];
+                    todos = todos.map(todo => ({...todo, projectId: this.activeProjectId}));
+                } else {
+                    todos = this.todoManager.getActiveTodos();
+                }
         }
-
+    
         if (this.activeProjectId) {
             tasksContainer.innerHTML = this.renderTodoList(todos);
             return;
         }
-
+    
         const projectManager = new ProjectManager();
         const todosByProject = new Map();
-
+        
         todos.forEach(todo => {
             const projectId = todo.projectId;
+            if (!projectManager.getProject(projectId)) return;
+            
             if (!todosByProject.has(projectId)) {
                 todosByProject.set(projectId, []);
             }
             todosByProject.get(projectId).push(todo);
         });
-
+    
         const html = Array.from(todosByProject.entries()).map(([projectId, projectTodos]) => {
             const project = projectManager.getProject(projectId);
+            if (!project) return '';
             return `
                 <div class="project-section">
                     <h3 class="project-header">${project.name}</h3>
@@ -262,13 +289,13 @@ export default class Layout {
                 </div>
             `;
         }).join('');
-
+    
         tasksContainer.innerHTML = html || '<p>No tasks yet</p>';
     }
 
     renderTodoList(todos) {
         if (!todos.length) return '';
-
+        
         return todos.map(todo => `
             <div class="todo-item ${todo.completed ? 'completed' : ''}" 
                  data-id="${todo.id}" 
@@ -283,7 +310,9 @@ export default class Layout {
                     </div>
                 </div>
                 <div class="todo-actions">
-                    <button class="delete-todo">×</button>
+                    <button class="edit-todo">
+                        <svg class="feather feather-edit" fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
                 </div>
             </div>
         `).join('');
@@ -365,21 +394,21 @@ export default class Layout {
         const projectInput = document.querySelector('.add-project-input');
         const saveProjectBtn = document.getElementById('save-project-btn');
         const cancelProjectBtn = document.getElementById('cancel-project-btn');
-
+    
         this.renderProjects(projectManager.getAllProjects());
-
+    
         addProjectBtn.addEventListener('click', () => {
             addProjectBtn.style.display = 'none';
             addProjectForm.style.display = 'block';
             projectInput.focus();
         });
-
+    
         cancelProjectBtn.addEventListener('click', () => {
             addProjectBtn.style.display = 'block';
             addProjectForm.style.display = 'none';
             projectInput.value = '';
         });
-
+    
         saveProjectBtn.addEventListener('click', () => {
             const projectName = projectInput.value.trim();
             if (projectName) {
@@ -390,26 +419,38 @@ export default class Layout {
                 projectInput.value = '';
             }
         });
-
+    
         projectsList.addEventListener('click', (e) => {
             const projectItem = e.target.closest('.project-item');
-
+            
             if (e.target.classList.contains('delete-project')) {
-                const projectId = projectItem.dataset.id;
+                const projectId = e.target.closest('.project-item').dataset.id;
                 projectManager.deleteProject(projectId);
+                
+                if (this.activeProjectId === projectId) {
+                    this.activeProjectId = null;
+                    const allTasksLink = document.querySelector('.sidebar-nav a[data-view="all"]');
+                    if (allTasksLink) {
+                        allTasksLink.click();
+                    } else {
+                        this.updateMainHeader('All Tasks');
+                        this.renderTodos('all');
+                    }
+                }
+                
                 this.renderProjects(projectManager.getAllProjects());
                 return;
             }
-
+    
             if (projectItem) {
                 const projectId = projectItem.dataset.id;
                 const project = projectManager.getProject(projectId);
-
+                
                 this.activeProjectId = projectId;
                 this.renderProjects(projectManager.getAllProjects());
                 this.updateMainHeader(project.name);
-                this.renderCurrentView();
-
+                this.renderTodos();
+    
                 document.querySelectorAll('.sidebar-nav a').forEach(link => {
                     link.classList.remove('active');
                 });
@@ -420,26 +461,28 @@ export default class Layout {
     setupTodoEvents() {
         const addTaskBtn = document.querySelector('.add-task-btn');
         const tasksContainer = document.querySelector('.tasks-container');
-
+    
         addTaskBtn.addEventListener('click', () => {
             this.showTodoModal();
         });
-
+    
         tasksContainer.addEventListener('click', (e) => {
             const todoItem = e.target.closest('.todo-item');
             if (!todoItem) return;
-
+            
             const todoId = todoItem.dataset.id;
             const projectId = todoItem.dataset.projectId || this.activeProjectId;
-
-            if (e.target.classList.contains('delete-todo')) {
-                this.todoManager.deleteTodo(projectId, todoId);
-                this.renderCurrentView();
-            }
-
+    
             if (e.target.classList.contains('todo-checkbox')) {
                 this.todoManager.toggleTodoComplete(projectId, todoId);
                 this.renderCurrentView();
+            }
+    
+            if (e.target.closest('.edit-todo')) {
+                const todo = this.todoManager.getTodo(projectId, todoId);
+                if (todo) {
+                    this.showTodoModal(todo, projectId);
+                }
             }
         });
     }
