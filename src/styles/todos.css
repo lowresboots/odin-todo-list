@@ -44,6 +44,20 @@
     font-size: 1rem;
 }
 
+.project-section {
+    margin-bottom: 2rem;
+}
+
+.project-header {
+    font-size: 1.1rem;
+    margin: 1.5rem 0 1rem 0;
+    font-weight: 600;
+}
+
+.project-section:first-child .project-header {
+    margin-top: 0;
+}
+
 .todo-actions {
     display: flex;
     gap: 1rem;

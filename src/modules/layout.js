@@ -201,8 +201,42 @@ export default class Layout {
                     : this.todoManager.getActiveTodos();
         }
     
-        tasksContainer.innerHTML = todos.length ? todos.map(todo => `
-            <div class="todo-item ${todo.completed ? 'completed' : ''}" data-id="${todo.id}" data-project-id="${todo.projectId || this.activeProjectId}">
+        if (this.activeProjectId) {
+            tasksContainer.innerHTML = this.renderTodoList(todos);
+            return;
+        }
+    
+        const projectManager = new ProjectManager();
+        const todosByProject = new Map();
+        
+        todos.forEach(todo => {
+            const projectId = todo.projectId;
+            if (!todosByProject.has(projectId)) {
+                todosByProject.set(projectId, []);
+            }
+            todosByProject.get(projectId).push(todo);
+        });
+    
+        const html = Array.from(todosByProject.entries()).map(([projectId, projectTodos]) => {
+            const project = projectManager.getProject(projectId);
+            return `
+                <div class="project-section">
+                    <h3 class="project-header">${project.name}</h3>
+                    ${this.renderTodoList(projectTodos)}
+                </div>
+            `;
+        }).join('');
+    
+        tasksContainer.innerHTML = html || '<p>No tasks yet</p>';
+    }
+    
+    renderTodoList(todos) {
+        if (!todos.length) return '';
+        
+        return todos.map(todo => `
+            <div class="todo-item ${todo.completed ? 'completed' : ''}" 
+                 data-id="${todo.id}" 
+                 data-project-id="${todo.projectId || this.activeProjectId}">
                 <input type="checkbox" class="todo-checkbox" ${todo.completed ? 'checked' : ''}>
                 <div class="todo-content">
                     <div class="todo-title">${todo.title}</div>
@@ -216,7 +250,7 @@ export default class Layout {
                     <button class="delete-todo">×</button>
                 </div>
             </div>
-        `).join('') : '<p>No tasks yet</p>';
+        `).join('');
     }
 
     updateMainHeader(title) {
