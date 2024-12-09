@@ -27,6 +27,9 @@ export default class Layout {
                     <div class="user-avatar">
                         ${this.createAvatarElement()}
                     </div>
+                    <div class="user-dropdown" style="display: none;">
+                        <div class="dropdown-item sign-out">Sign Out</div>
+                    </div>
                 </div>
             </div>
         `;
@@ -100,7 +103,7 @@ export default class Layout {
     createTodoModal() {
         const modal = document.createElement('div');
         modal.className = 'modal-overlay';
-        
+
         const projectManager = new ProjectManager();
         const projects = projectManager.getAllProjects();
         const projectOptions = projects
@@ -110,7 +113,7 @@ export default class Layout {
                 </option>
             `)
             .join('');
-        
+
         modal.innerHTML = `
             <div class="todo-modal">
                 <h2>Add New Task</h2>
@@ -148,26 +151,26 @@ export default class Layout {
                 </form>
             </div>
         `;
-    
+
         return modal;
     }
 
     showTodoModal() {
         const modal = this.createTodoModal();
         document.body.appendChild(modal);
-    
+
         const form = modal.querySelector('.todo-form');
         const cancelButton = modal.querySelector('#cancel-todo');
-    
+
         form.addEventListener('submit', (e) => {
             e.preventDefault();
-            
+
             const title = document.getElementById('todo-title').value;
             const description = document.getElementById('todo-description').value;
             const dueDate = document.getElementById('todo-due-date').value;
             const priority = document.getElementById('todo-priority').value;
             const projectId = document.getElementById('todo-project').value;
-    
+
             if (title.trim()) {
                 const todo = new Todo(title, description, dueDate, priority);
                 this.todoManager.addTodo(projectId, todo);
@@ -175,8 +178,41 @@ export default class Layout {
                 document.body.removeChild(modal);
             }
         });
-    
+
         cancelButton.addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+    }
+
+    showSignOutConfirmation() {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        
+        modal.innerHTML = `
+            <div class="todo-modal">
+                <h2>Sign Out</h2>
+                <p>Are you sure you want to sign out? This will clear all your data...</p>
+                <p style="font-size: 0.9em; color: #666; margin-top: 0.5rem;">
+                    (Yes, this is just for testing. In a real app, your data would be saved!)
+                </p>
+                <div class="todo-actions" style="margin-top: 2rem;">
+                    <button class="btn-todo btn-primary" id="confirm-signout">Sign Out</button>
+                    <button class="btn-todo btn-secondary" id="cancel-signout">Cancel</button>
+                </div>
+            </div>
+        `;
+    
+        document.body.appendChild(modal);
+    
+        const confirmBtn = modal.querySelector('#confirm-signout');
+        const cancelBtn = modal.querySelector('#cancel-signout');
+    
+        confirmBtn.addEventListener('click', () => {
+            localStorage.clear();
+            window.location.reload();
+        });
+    
+        cancelBtn.addEventListener('click', () => {
             document.body.removeChild(modal);
         });
     }
@@ -184,8 +220,8 @@ export default class Layout {
     renderTodos(view = 'all') {
         const tasksContainer = document.querySelector('.tasks-container');
         let todos;
-    
-        switch(view) {
+
+        switch (view) {
             case 'today':
                 todos = this.todoManager.getTodayTodos();
                 break;
@@ -196,19 +232,19 @@ export default class Layout {
                 todos = this.todoManager.getCompletedTodos();
                 break;
             default:
-                todos = this.activeProjectId 
+                todos = this.activeProjectId
                     ? this.todoManager.getTodos(this.activeProjectId)
                     : this.todoManager.getActiveTodos();
         }
-    
+
         if (this.activeProjectId) {
             tasksContainer.innerHTML = this.renderTodoList(todos);
             return;
         }
-    
+
         const projectManager = new ProjectManager();
         const todosByProject = new Map();
-        
+
         todos.forEach(todo => {
             const projectId = todo.projectId;
             if (!todosByProject.has(projectId)) {
@@ -216,7 +252,7 @@ export default class Layout {
             }
             todosByProject.get(projectId).push(todo);
         });
-    
+
         const html = Array.from(todosByProject.entries()).map(([projectId, projectTodos]) => {
             const project = projectManager.getProject(projectId);
             return `
@@ -226,13 +262,13 @@ export default class Layout {
                 </div>
             `;
         }).join('');
-    
+
         tasksContainer.innerHTML = html || '<p>No tasks yet</p>';
     }
-    
+
     renderTodoList(todos) {
         if (!todos.length) return '';
-        
+
         return todos.map(todo => `
             <div class="todo-item ${todo.completed ? 'completed' : ''}" 
                  data-id="${todo.id}" 
@@ -281,6 +317,24 @@ export default class Layout {
         const sidebar = document.querySelector('.app-sidebar');
         menuToggle.addEventListener('click', () => {
             sidebar.classList.toggle('active');
+        });
+
+        const userProfile = document.querySelector('.user-profile');
+        const userDropdown = document.querySelector('.user-dropdown');
+
+        userProfile.addEventListener('click', () => {
+            userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!userProfile.contains(e.target)) {
+                userDropdown.style.display = 'none';
+            }
+        });
+
+        const signOutBtn = document.querySelector('.sign-out');
+        signOutBtn.addEventListener('click', () => {
+            this.showSignOutConfirmation();
         });
 
         const viewLinks = document.querySelectorAll('.sidebar-nav a[data-view]');
@@ -350,12 +404,12 @@ export default class Layout {
             if (projectItem) {
                 const projectId = projectItem.dataset.id;
                 const project = projectManager.getProject(projectId);
-                
+
                 this.activeProjectId = projectId;
                 this.renderProjects(projectManager.getAllProjects());
                 this.updateMainHeader(project.name);
                 this.renderCurrentView();
-            
+
                 document.querySelectorAll('.sidebar-nav a').forEach(link => {
                     link.classList.remove('active');
                 });
@@ -366,30 +420,30 @@ export default class Layout {
     setupTodoEvents() {
         const addTaskBtn = document.querySelector('.add-task-btn');
         const tasksContainer = document.querySelector('.tasks-container');
-    
+
         addTaskBtn.addEventListener('click', () => {
             this.showTodoModal();
         });
-    
+
         tasksContainer.addEventListener('click', (e) => {
             const todoItem = e.target.closest('.todo-item');
             if (!todoItem) return;
-            
+
             const todoId = todoItem.dataset.id;
             const projectId = todoItem.dataset.projectId || this.activeProjectId;
-    
+
             if (e.target.classList.contains('delete-todo')) {
                 this.todoManager.deleteTodo(projectId, todoId);
                 this.renderCurrentView();
             }
-            
+
             if (e.target.classList.contains('todo-checkbox')) {
                 this.todoManager.toggleTodoComplete(projectId, todoId);
                 this.renderCurrentView();
             }
         });
     }
-    
+
     renderCurrentView() {
         const activeLink = document.querySelector('.sidebar-nav a.active');
         const currentView = activeLink ? activeLink.dataset.view : 'all';

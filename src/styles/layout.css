@@ -111,10 +111,11 @@
 }
 
 .user-name {
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
+    cursor: pointer;
+}
+
+.user-name:hover {
+    text-decoration: underline;
 }
 
 .user-avatar .default-avatar {
@@ -135,6 +136,36 @@
     height: 100%;
     background-size: cover;
     background-position: center;
+}
+
+.user-profile {
+    position: relative;
+    cursor: pointer;
+}
+
+.user-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    min-width: 150px;
+    margin-top: 0.5rem;
+}
+
+.dropdown-item {
+    padding: 0.75rem 1rem;
+    transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+.sign-out {
+    color: #dc3545;
 }
 
 @media (max-width: 768px) {
