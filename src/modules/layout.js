@@ -2,10 +2,11 @@ import ProjectManager from './projects';
 import TodoManager, { Todo } from './todos';
 
 export default class Layout {
-    constructor(userData) {
+    constructor(userData, todoManager, projectManager) {
         this.userData = userData;
         this.activeProjectId = null;
-        this.todoManager = new TodoManager();
+        this.todoManager = todoManager;
+        this.projectManager = projectManager;
     }
 
     createHeader() {
@@ -105,8 +106,7 @@ export default class Layout {
         modal.className = 'modal-overlay';
         
         // Get all projects for the selector
-        const projectManager = new ProjectManager();
-        const projects = projectManager.getAllProjects();
+        const projects = this.projectManager.getAllProjects();
         const projectOptions = projects
             .map(project => `
                 <option value="${project.id}" ${project.id === (todoToEdit?.projectId || this.activeProjectId) ? 'selected' : ''}>
@@ -254,8 +254,9 @@ export default class Layout {
                 break;
             default:
                 if (this.activeProjectId) {
-                    todos = this.todoManager.todos.get(this.activeProjectId) || [];
-                    todos = todos.map(todo => ({...todo, projectId: this.activeProjectId}));
+                    const projectTodos = this.todoManager.getAllTodos()
+                        .filter(todo => todo.projectId === this.activeProjectId);
+                    todos = projectTodos;
                 } else {
                     todos = this.todoManager.getActiveTodos();
                 }
@@ -266,12 +267,11 @@ export default class Layout {
             return;
         }
     
-        const projectManager = new ProjectManager();
         const todosByProject = new Map();
         
         todos.forEach(todo => {
             const projectId = todo.projectId;
-            if (!projectManager.getProject(projectId)) return;
+            if (!this.projectManager.getProject(projectId)) return;
             
             if (!todosByProject.has(projectId)) {
                 todosByProject.set(projectId, []);
@@ -280,7 +280,7 @@ export default class Layout {
         });
     
         const html = Array.from(todosByProject.entries()).map(([projectId, projectTodos]) => {
-            const project = projectManager.getProject(projectId);
+            const project = this.projectManager.getProject(projectId);
             if (!project) return '';
             return `
                 <div class="project-section">
@@ -387,7 +387,7 @@ export default class Layout {
     }
 
     setupProjectEvents() {
-        const projectManager = new ProjectManager();
+        const projectManager = new ProjectManager(this.todoManager);
         const projectsList = document.querySelector('.projects-list');
         const addProjectBtn = document.getElementById('add-project-btn');
         const addProjectForm = document.querySelector('.add-project-form');
