@@ -20,7 +20,7 @@ export default class Layout {
                     <span></span>
                     <span></span>
                 </button>
-                <h1>Bootdo</h1>
+                <h1 class="app-title"><span class="boot">Boot</span><span class="do">do</span></h1>
             </div>
             <div class="header-right">
                 <div class="user-profile">

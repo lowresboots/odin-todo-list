@@ -190,3 +190,20 @@
         left: 0;
     }
 }
+
+.app-title {
+    margin: 0;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: baseline;
+}
+
+.app-title .boot {
+    font-weight: 300;
+    color: #2c3e50;
+}
+
+.app-title .do {
+    font-weight: 700;
+    color: #007bff;
+}
