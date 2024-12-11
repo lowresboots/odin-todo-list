@@ -29,6 +29,7 @@ export default class Layout {
                         ${this.createAvatarElement()}
                     </div>
                     <div class="user-dropdown" style="display: none;">
+                        <div class="dropdown-item about">About</div>
                         <div class="dropdown-item sign-out">Sign Out</div>
                     </div>
                 </div>
@@ -238,6 +239,43 @@ export default class Layout {
         });
     }
 
+    showAboutModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        
+        modal.innerHTML = `
+            <div class="todo-modal">
+                <h2>About Bootdo</h2>
+                <div class="about-content">
+                    <p>Bootdo is a project management application built as part of The Odin Project curriculum. It's designed to help developers organize their projects and tasks with a touch of humor.</p>
+                    
+                   <p class="features-text">Features include:</p>
+                    <ul>
+                        <li>Project organization</li>
+                        <li>Task management with priorities and due dates</li>
+                        <li>Different task views (Today, Upcoming, Completed)</li>
+                        <li>Fun default project names for developer inspiration</li>
+                    </ul>
+                    
+                    <p class="signature">
+                        Enjoy!<br><br>
+                        &mdash; Boots@lowresboots
+                    </p>
+                </div>
+                <div class="todo-actions">
+                    <button class="btn-todo btn-primary" id="close-about">Close</button>
+                </div>
+            </div>
+        `;
+    
+        document.body.appendChild(modal);
+    
+        const closeBtn = modal.querySelector('#close-about');
+        closeBtn.addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+    }
+
     renderTodos(view = 'all') {
         const tasksContainer = document.querySelector('.tasks-container');
         let todos;
@@ -364,6 +402,11 @@ export default class Layout {
         const signOutBtn = document.querySelector('.sign-out');
         signOutBtn.addEventListener('click', () => {
             this.showSignOutConfirmation();
+        });
+
+        const aboutBtn = document.querySelector('.about');
+        aboutBtn.addEventListener('click', () => {
+            this.showAboutModal();
         });
 
         const viewLinks = document.querySelectorAll('.sidebar-nav a[data-view]');
