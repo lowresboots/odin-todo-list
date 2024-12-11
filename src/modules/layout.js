@@ -63,7 +63,7 @@ export default class Layout {
                         <input type="text" class="add-project-input" placeholder="Project name">
                         <div class="project-actions">
                             <button class="btn-add-project" id="save-project-btn">Add</button>
-                            <button class="btn-cancel" id="cancel-project-btn">Cancel</button>
+                            
                         </div>
                     </div>
                 </div>
@@ -106,7 +106,6 @@ export default class Layout {
         const modal = document.createElement('div');
         modal.className = 'modal-overlay';
         
-        // Get all projects for the selector
         const projects = this.projectManager.getAllProjects();
         const projectOptions = projects
             .map(project => `
@@ -430,15 +429,13 @@ export default class Layout {
     }
 
     setupProjectEvents() {
-        const projectManager = new ProjectManager(this.todoManager);
         const projectsList = document.querySelector('.projects-list');
         const addProjectBtn = document.getElementById('add-project-btn');
         const addProjectForm = document.querySelector('.add-project-form');
         const projectInput = document.querySelector('.add-project-input');
         const saveProjectBtn = document.getElementById('save-project-btn');
-        const cancelProjectBtn = document.getElementById('cancel-project-btn');
     
-        this.renderProjects(projectManager.getAllProjects());
+        this.renderProjects(this.projectManager.getAllProjects());
     
         addProjectBtn.addEventListener('click', () => {
             addProjectBtn.style.display = 'none';
@@ -446,17 +443,19 @@ export default class Layout {
             projectInput.focus();
         });
     
-        cancelProjectBtn.addEventListener('click', () => {
-            addProjectBtn.style.display = 'block';
-            addProjectForm.style.display = 'none';
-            projectInput.value = '';
+        document.addEventListener('click', (e) => {
+            if (!addProjectForm.contains(e.target) && e.target !== addProjectBtn) {
+                addProjectBtn.style.display = 'block';
+                addProjectForm.style.display = 'none';
+                projectInput.value = '';
+            }
         });
     
         saveProjectBtn.addEventListener('click', () => {
             const projectName = projectInput.value.trim();
             if (projectName) {
-                const newProject = projectManager.createProject(projectName);
-                this.renderProjects(projectManager.getAllProjects());
+                const newProject = this.projectManager.createProject(projectName);
+                this.renderProjects(this.projectManager.getAllProjects());
                 addProjectBtn.style.display = 'block';
                 addProjectForm.style.display = 'none';
                 projectInput.value = '';
@@ -468,7 +467,7 @@ export default class Layout {
             
             if (e.target.classList.contains('delete-project')) {
                 const projectId = e.target.closest('.project-item').dataset.id;
-                projectManager.deleteProject(projectId);
+                this.projectManager.deleteProject(projectId);
                 
                 if (this.activeProjectId === projectId) {
                     this.activeProjectId = null;
@@ -481,16 +480,16 @@ export default class Layout {
                     }
                 }
                 
-                this.renderProjects(projectManager.getAllProjects());
+                this.renderProjects(this.projectManager.getAllProjects());
                 return;
             }
     
             if (projectItem) {
                 const projectId = projectItem.dataset.id;
-                const project = projectManager.getProject(projectId);
+                const project = this.projectManager.getProject(projectId);
                 
                 this.activeProjectId = projectId;
-                this.renderProjects(projectManager.getAllProjects());
+                this.renderProjects(this.projectManager.getAllProjects());
                 this.updateMainHeader(project.name);
                 this.renderTodos();
     
@@ -538,6 +537,16 @@ export default class Layout {
 
     renderProjects(projects) {
         const projectsList = document.querySelector('.projects-list');
+        const addTaskBtn = document.querySelector('.add-task-btn');
+        
+        if (projects.length === 0) {
+            addTaskBtn.disabled = true;
+            addTaskBtn.classList.add('disabled');
+        } else {
+            addTaskBtn.disabled = false;
+            addTaskBtn.classList.remove('disabled');
+        }
+    
         projectsList.innerHTML = projects.map(project => `
             <li class="project-item ${project.id === this.activeProjectId ? 'active' : ''}" data-id="${project.id}">
                 <span class="project-name">${project.name}</span>
