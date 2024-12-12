@@ -182,7 +182,14 @@ export default class Layout {
                     todoToEdit.description = description;
                     todoToEdit.dueDate = dueDate;
                     todoToEdit.priority = priority;
-                    this.todoManager.updateTodo(projectId, todoToEdit.id, todoToEdit);
+                    
+                    if (projectId !== selectedProjectId) {
+                        this.todoManager.deleteTodo(projectId, todoToEdit.id);
+                        const newTodo = new Todo(title, description, dueDate, priority);
+                        this.todoManager.addTodo(selectedProjectId, newTodo);
+                    } else {
+                        this.todoManager.updateTodo(projectId, todoToEdit.id, todoToEdit);
+                    }
                 } else {
                     const todo = new Todo(title, description, dueDate, priority);
                     this.todoManager.addTodo(selectedProjectId, todo);
