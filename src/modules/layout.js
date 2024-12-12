@@ -385,6 +385,34 @@ export default class Layout {
             sidebar.classList.toggle('active');
         });
 
+    document.addEventListener('click', (e) => {
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile && !sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+            sidebar.classList.remove('active');
+        }
+    });
+
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    document.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, false);
+    
+    document.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, false);
+    
+    const handleSwipe = () => {
+        const swipeDistance = touchEndX - touchStartX;
+        const minSwipeDistance = 50;
+        
+        if (swipeDistance < -minSwipeDistance) {
+            sidebar.classList.remove('active');
+        }
+    };
+
         const userProfile = document.querySelector('.user-profile');
         const userDropdown = document.querySelector('.user-dropdown');
 
@@ -424,6 +452,12 @@ export default class Layout {
                 const view = link.dataset.view;
                 this.updateMainHeader(link.textContent);
                 this.renderTodos(view);
+
+                const isMobile = window.innerWidth <= 768;
+                if (isMobile) {
+                    const sidebar = document.querySelector('.app-sidebar');
+                    sidebar.classList.remove('active');
+                }
             });
         });
     }
