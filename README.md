@@ -1,5 +1,6 @@
 # Bootdo ✅
 A task management app designed to help developers stay organized by tracking tasks, deadlines, and priorities.
+
 🔗 **Live Demo:** [Bootdo on GitHub Pages](https://lowresboots.github.io/odin-todo-list/)
 
 ## Features
